@@ -229,3 +229,30 @@ const weightedLcs = (seq1, seq2, lcs=glcs) => {
 const contextLcs = (seq1, seq2, lcs=glcs) => {
   return lcs(seq1, seq2) + Math.max(seq1.length, seq2.length) / (Math.min(seq1.length, seq2.length) || 1);
 };
+
+const tokenize = str => str.trim().split(/\s+/);
+
+const toSentences = str => str.split(/[.!?]+/).map(s => s.trim()).filter(Boolean);
+
+const toPhrases = str => str.split(/[.!?,;]+/).map(s => s.trim()).filter(Boolean);
+
+const dedupeSegments = (segments, { preferLonger = true } = {}) => {
+  const kept = [];
+  for (const s of segments) {
+    const tokens = tokenize(s);
+    const matchIdx = kept.findIndex(k => sentenceMatch(tokenize(k), tokens));
+    if (matchIdx === -1) {
+      kept.push(s);
+    } else if (preferLonger && s.length > kept[matchIdx].length) {
+      kept[matchIdx] = s;
+    }
+  }
+  return kept;
+};
+
+const dedupeSentences = (text, opts) => dedupeSegments(toSentences(text), opts);
+
+const dedupePhrases = (text, opts) => dedupeSegments(toPhrases(text), opts);
+
+
+
