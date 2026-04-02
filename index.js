@@ -19,7 +19,7 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, compare = (x, 
     for (let i = 1; i !== dp_length; ++i) {
         const dpi_length = dp[i].length;
         for (let x = 1; x !== dp_length; ++x) {
-            if (arr1[i - 1] === arr2[x - 1]) {
+            if (compare(arr1[i - 1], arr2[x - 1])) {
                 dp[i][x] = dp[i - 1][x - 1] + 1
             } else {
                 dp[i][x] = Math.max(dp[i][x - 1], dp[i - 1][x])
