@@ -44,14 +44,14 @@ const lcsMemo = new Map();
  *   Swap in an LCS-based matcher to get recursive/hierarchical LCS.
  * @returns {number} Length of the longest common subsequence
  */
-const glcs = function generalLongestCommonSubsequence(seq1, seq2, compare=(x,y)=>(x===y)) {
+const glcs = function generalLongestCommonSubsequence(seq1, seq2, compare = (x, y) => (x === y)) {
   "use strict";
-  const key = String([seq1,seq2].sort());
-  if(lcsMemo.has(key)){
+  const key = String([seq1, seq2].sort());
+  if (lcsMemo.has(key)) {
     return lcsMemo.get(key);
   }
-  let array1 = [...seq1??[]];
-  let array2 = [...seq2??[]];
+  let array1 = [...seq1 ?? []];
+  let array2 = [...seq2 ?? []];
   // Always put the longer sequence on the outer dimension for consistency
   if (array2.length > array1.length) {
     [array1, array2] = [array2, array1];
@@ -60,7 +60,7 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, compare=(x,y)=
   const arr1_length = arr1.length;
   const arr2_length = arr2.length;
   const dp = Array(arr1_length + 1).fill(0).map(() => new Uint8Array(arr2_length + 1));
-  const dp_length = dp.length;         // arr1_length + 1, outer dimension
+  const dp_length = dp.length; // arr1_length + 1, outer dimension
   const dp_inner_length = arr2_length + 1; // inner dimension — distinct from dp_length
   for (let i = 1; i !== dp_length; ++i) {
     for (let x = 1; x !== dp_inner_length; ++x) { // was incorrectly dp_length — over-iterated inner dimension when lengths differ
@@ -94,7 +94,7 @@ const norm = x => String(x).normalize('NFD').toLowerCase();
  * @param {string} str2
  * @returns {number}
  */
-const nlcs = function normalizedLongestCommonSubsequence(str1, str2){
+const nlcs = function normalizedLongestCommonSubsequence(str1, str2) {
   return glcs(norm(str1), norm(str2));
 };
 
@@ -115,7 +115,7 @@ const nlcs = function normalizedLongestCommonSubsequence(str1, str2){
  * @param {function} lcs - LCS function to use. Defaults to glcs.
  * @returns {boolean}
  */
-const lcsMatch = (seq1, seq2, lcs=glcs) => {
+const lcsMatch = (seq1, seq2, lcs = glcs) => {
   return lcs(seq1, seq2) >= Math.floor(0.8 * Math.max(seq1.length, seq2.length));
 };
 
@@ -132,7 +132,7 @@ const lcsMatch = (seq1, seq2, lcs=glcs) => {
  * @param {function} lcs - LCS function to use. Defaults to glcs.
  * @returns {boolean}
  */
-const lcsHas = (seq1, seq2, lcs=glcs) => {
+const lcsHas = (seq1, seq2, lcs = glcs) => {
   return lcs(seq1, seq2) >= Math.floor(0.8 * Math.min(seq1.length, seq2.length));
 };
 
@@ -202,7 +202,7 @@ const sentenceMatch = (seq1, seq2) => {
  * @param {function} lcs - LCS function to use. Defaults to glcs.
  * @returns {number}
  */
-const weightedLcs = (seq1, seq2, lcs=glcs) => {
+const weightedLcs = (seq1, seq2, lcs = glcs) => {
   return lcs(seq1, seq2) * Math.min(seq1.length, seq2.length) / Math.max(seq1.length, seq2.length, 1);
 };
 
@@ -226,7 +226,7 @@ const weightedLcs = (seq1, seq2, lcs=glcs) => {
  * @param {function} lcs - LCS function to use. Defaults to glcs.
  * @returns {number}
  */
-const contextLcs = (seq1, seq2, lcs=glcs) => {
+const contextLcs = (seq1, seq2, lcs = glcs) => {
   return lcs(seq1, seq2) + Math.max(seq1.length, seq2.length) / (Math.min(seq1.length, seq2.length) || 1);
 };
 
@@ -236,7 +236,9 @@ const toSentences = str => str.split(/[.!?]+/).map(s => s.trim()).filter(Boolean
 
 const toPhrases = str => str.split(/[.!?,;]+/).map(s => s.trim()).filter(Boolean);
 
-const dedupeSegments = (segments, { preferLonger = true } = {}) => {
+const dedupeSegments = (segments, {
+  preferLonger = true
+} = {}) => {
   const kept = [];
   for (const s of segments) {
     const tokens = tokenize(s);
@@ -254,14 +256,10 @@ const dedupeSentences = (text, opts) => dedupeSegments(toSentences(text), opts);
 
 const dedupePhrases = (text, opts) => dedupeSegments(toPhrases(text), opts);
 
-const sortedLcs = (seq1, seq2, lcs=glcs) => {
+const sortedLcs = (seq1, seq2, lcs = glcs) => {
   return lcs([...seq1].sort(), [...seq2].sort());
 };
 
 const sortedWordLcs = (str1, str2) => {
   return sortedLcs(tokenize(str1), tokenize(str2), sentenceLcs);
 };
-
-
-
-
