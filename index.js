@@ -254,5 +254,14 @@ const dedupeSentences = (text, opts) => dedupeSegments(toSentences(text), opts);
 
 const dedupePhrases = (text, opts) => dedupeSegments(toPhrases(text), opts);
 
+const sortedLcs = (seq1, seq2, lcs=glcs) => {
+  return lcs([...seq1].sort(), [...seq2].sort());
+};
+
+const sortedWordLcs = (str1, str2) => {
+  return sortedLcs(tokenize(str1), tokenize(str2), sentenceLcs);
+};
+
+
 
 
