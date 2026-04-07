@@ -180,8 +180,8 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, compare = defa
   // Resolve threshold — accept a number or a function(seq1, seq2) → number
   const threshold = (typeof minScore === 'function') ? minScore(seq1, seq2) : (minScore || 0);
 
-  let array1 = [...seq1 ?? []];
-  let array2 = [...seq2 ?? []];
+  let array1 = len(seq1) ? seq1 : [...seq1 ?? []];
+  let array2 = len(seq2) ? seq2 : [...seq2 ?? []];
   // Always put the longer sequence on the outer dimension for consistency
   if (array2.length > array1.length) {
     [array1, array2] = [array2, array1];
