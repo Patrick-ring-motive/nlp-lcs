@@ -98,6 +98,10 @@ const nlcs = function normalizedLongestCommonSubsequence(str1, str2) {
   return glcs(norm(str1), norm(str2));
 };
 
+const scoreMatch = (seq1, seq2, score=0) => {
+  return score >= Math.floor(0.8 * Math.max(seq1.length, seq2.length));
+};
+
 /**
  * Threshold match using the Pareto-derived 80% rule.
  *
@@ -116,7 +120,26 @@ const nlcs = function normalizedLongestCommonSubsequence(str1, str2) {
  * @returns {boolean}
  */
 const lcsMatch = (seq1, seq2, lcs = glcs) => {
-  return lcs(seq1, seq2) >= Math.floor(0.8 * Math.max(seq1.length, seq2.length));
+  return scoreMatch(seq1,seq2,lcs(seq1, seq2));
+};
+
+const bestLcsMatch=(seq1,seqList,lcs=glcs,matcher=scoreMatch)=>{
+  let score = 0;
+  let value;
+  let match = false;
+  for(const seq2 of seqList){
+    const matchScore = lcs(seq1,seq2);
+    if(matchScore > score){
+      score = matchScore;
+      value = seq2;
+    }
+  }
+  match = matcher(seq1,value,score);
+  return {value,match,score};
+};
+
+const scoreHas = (seq1, seq2, score=0) => {
+  return score >= Math.floor(0.8 * Math.min(seq1.length, seq2.length));
 };
 
 /**
@@ -133,7 +156,11 @@ const lcsMatch = (seq1, seq2, lcs = glcs) => {
  * @returns {boolean}
  */
 const lcsHas = (seq1, seq2, lcs = glcs) => {
-  return lcs(seq1, seq2) >= Math.floor(0.8 * Math.min(seq1.length, seq2.length));
+  return scoreHas(seq1,seq2,lcs(seq1, seq2));
+};
+
+const bestLcsHas=(seq1,seqList,lcs=glcs)=>{
+  return bestLcsMatch(seq1,seqList,lcs,scoreHas);
 };
 
 /**
@@ -148,6 +175,10 @@ const lcsHas = (seq1, seq2, lcs = glcs) => {
  */
 const wordMatch = (seq1, seq2) => {
   return lcsMatch(seq1, seq2, nlcs);
+};
+
+const bestWordMatch=(seq1,seqList)=>{
+  return bestLcsMatch(seq1,seqList,nlcs,wordMatch);
 };
 
 /**
@@ -174,6 +205,8 @@ const sentenceLcs = (words1, words2) => {
   return glcs(words1, words2, wordMatch);
 };
 
+
+
 /**
  * Sentence-level fuzzy match using LCWS.
  * Returns true if the two tokenized sentences meet the 80% threshold at the
@@ -185,6 +218,10 @@ const sentenceLcs = (words1, words2) => {
  */
 const sentenceMatch = (seq1, seq2) => {
   return lcsMatch(seq1, seq2, sentenceLcs);
+};
+
+const bestSentenceMatch=(seq1,seqList)=>{
+  return bestLcsMatch(seq1,seqList,sentenceLcs,sentenceMatch);
 };
 
 /**
@@ -204,6 +241,18 @@ const sentenceMatch = (seq1, seq2) => {
  */
 const weightedLcs = (seq1, seq2, lcs = glcs) => {
   return lcs(seq1, seq2) * Math.min(seq1.length, seq2.length) / Math.max(seq1.length, seq2.length, 1);
+};
+
+const bestWeightedMatch=(seq1,seqList)=>{
+  return bestLcsMatch(seq1,seqList,weightedLcs);
+};
+
+const weightedWordLcs = (seq1, seq2) => {
+  return weightedLcs(seq1,seq2,nlcs);
+};
+
+const bestWeightedWordMatch=(seq1,seqList)=>{
+  return bestLcsMatch(seq1,seqList,weightedWordLcs);
 };
 
 /**
@@ -229,6 +278,19 @@ const weightedLcs = (seq1, seq2, lcs = glcs) => {
 const contextLcs = (seq1, seq2, lcs = glcs) => {
   return lcs(seq1, seq2) + Math.max(seq1.length, seq2.length) / (Math.min(seq1.length, seq2.length) || 1);
 };
+
+const bestContextMatch=(seq1,seqList)=>{
+  return bestLcsMatch(seq1,seqList,contextLcs);
+};
+
+const contextWordLcs = (seq1, seq2) => {
+  return contextLcs(seq1, seq2, nlcs);
+};
+
+const bestContextWordMatch=(seq1,seqList)=>{
+  return bestLcsMatch(seq1,seqList,contextWordLcs);
+};
+
 
 const tokenize = str => str.trim().split(/\s+/);
 
