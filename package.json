@@ -1,0 +1,41 @@
+{
+  "name": "nlp-lcs",
+  "version": "1.0.0",
+  "description": "LCS-based sequence matching utilities for NLP pipelines — fuzzy word matching, sentence deduplication, reranking, and more",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test index.test.js"
+  },
+  "keywords": [
+    "lcs",
+    "longest-common-subsequence",
+    "nlp",
+    "fuzzy-match",
+    "string-similarity",
+    "deduplication",
+    "reranking",
+    "tokenize",
+    "word-match",
+    "sentence-match"
+  ],
+  "author": "Patrick-ring-motive",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Patrick-ring-motive/nlp-lcs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Patrick-ring-motive/nlp-lcs/issues"
+  },
+  "homepage": "https://github.com/Patrick-ring-motive/nlp-lcs#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
