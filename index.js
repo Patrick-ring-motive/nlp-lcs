@@ -11,7 +11,30 @@
  * with memoization making the recursive cases tractable via high cache hit rates
  * on repeated vocabulary across a corpus.
  */
-
+const pairIntersect = (seq1,seq2)=>{
+  let score = 0;
+  if(seq1.length ?seq2.length){
+    [seq2,seq1] = [seq1,seq2];
+  }
+  const set1 = new Map();
+  const set2 = new Map();
+  const seq1_length = seq1.length;
+  const seq2_length = seq2.length;
+  for(let i = 1; i !== seq1_length; ++i){
+    const key = String(seq1[i-1]) + String(seq1[i]);
+    let count  = set1.get(key) ?? 0;
+    set1.set(key,count++);    
+  }
+  for(let i = 1; i !== seq2_length; ++i){
+    const key = String(seq2[i-1]) + String(seq2[i]);
+    let count  = set2.get(key) || 0;
+    set2.set(key,count++);    
+  }
+  for(const [key,value] of set1){
+    score += Math.min(value,set2.get(key)??0);
+  }
+  return score;
+};
 /**
  * Get the length of any value.
  * Tries `.length`, then `.size()`, then `parseInt` as a numeric fallback.
