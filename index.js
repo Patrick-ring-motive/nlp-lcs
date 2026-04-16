@@ -11,7 +11,7 @@
  * with memoization making the recursive cases tractable via high cache hit rates
  * on repeated vocabulary across a corpus.
  */
-const pairIntersect = (seq1,seq2)=>{
+const bigramIntersection = (seq1,seq2)=>{
   let score = 0;
   if(seq1.length < seq2.length){
     [seq2,seq1] = [seq1,seq2];
