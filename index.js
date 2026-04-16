@@ -18,17 +18,17 @@ const pairIntersect = (seq1,seq2)=>{
   }
   const set1 = new Map();
   const set2 = new Map();
-  const seq1_length = seq1.length;
-  const seq2_length = seq2.length;
-  for(let i = 1; i !== seq1_length; ++i){
+  const seq1_length = seq1.length + 1;
+  const seq2_length = seq2.length + 1;
+  for(let i = 0; i !== seq1_length; ++i){
     const key = String(seq1[i-1]) + String(seq1[i]);
     let count  = set1.get(key) ?? 0;
-    set1.set(key,count++);    
+    set1.set(key,count+1);    
   }
-  for(let i = 1; i !== seq2_length; ++i){
+  for(let i = 0; i !== seq2_length; ++i){
     const key = String(seq2[i-1]) + String(seq2[i]);
-    let count  = set2.get(key) || 0;
-    set2.set(key,count++);    
+    let count  = set2.get(key) ?? 0;
+    set2.set(key,count+1);    
   }
   for(const [key,value] of set1){
     score += Math.min(value,set2.get(key)??0);
