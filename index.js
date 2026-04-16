@@ -12,15 +12,17 @@
  * on repeated vocabulary across a corpus.
  */
 const bigramIntersection = (seq1,seq2)=>{
+  "use strict";
   let score = 0;
   const s1l = seq1.length;
   const s2l = seq2.length;
-  if(seq1.length < seq2.length){
+  if(s1l < s2l){
     [seq2,seq1] = [seq1,seq2];
   }
+  const seq1len = seq1.length;
   const set1 = new Map();
   const set2 = new Map();
-  const seq1_length = seq1.length + 1;
+  const seq1_length = seq1len + 1;
   const seq2_length = seq2.length + 1;
   for(let i = 0; i !== seq1_length; ++i){
     const key = String(seq1[i-1]) + String(seq1[i]);
@@ -35,7 +37,7 @@ const bigramIntersection = (seq1,seq2)=>{
   for(const [key,value] of set1){
     score += Math.min(value,set2.get(key)??0);
   }
-  return score;
+  return Math.min(score,seq1len);
 };
 /**
  * Get the length of any value.
