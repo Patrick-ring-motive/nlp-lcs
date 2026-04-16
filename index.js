@@ -221,8 +221,10 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, comp, minS) {
   if (threshold > 0 && arr2_length < threshold) {
     return bigramIntersection(array1, array2);
   }
-  //const bisection 
-
+  const bisection = bigramIntersection(array1, array2);
+  if (threshold > 0 && bisection < threshold) {
+    return bisection;
+  }
   const DPArray = selectArrayType(arr2_length);
   const width = arr2_length + 1;
   const height = arr1_length + 1;
