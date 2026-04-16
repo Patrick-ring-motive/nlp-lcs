@@ -15,6 +15,9 @@ const bigramIntersection = (seq1,seq2)=>{
   "use strict";
   let score = 0;
   const s1l = seq1.length;
+  if(seq1 === seq2){
+    return s1l
+  }
   const s2l = seq2.length;
   if(s1l < s2l){
     [seq2,seq1] = [seq1,seq2];
