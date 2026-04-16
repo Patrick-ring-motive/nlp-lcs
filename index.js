@@ -192,7 +192,7 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, compare = defa
 
   // Pre-DP rejection: the LCS can never exceed the shorter sequence's length
   if (threshold > 0 && arr2_length < threshold) {
-    return arr2_length; // upper-bound < threshold → can't match; return best-case
+    return new Set(arr1).intersection(new Set(arr2)); // upper-bound < threshold → can't match; return best-case
   }
 
   const DPArray = selectArrayType(arr2_length);
