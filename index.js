@@ -200,8 +200,8 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, compare = defa
   const dp_length = dp.length; // arr1_length + 1, outer dimension
   const dp_inner_length = arr2_length + 1; // inner dimension — distinct from dp_length
   for (let i = 1; i !== dp_length; ++i) {
-    for (let x = 1; x !== dp_inner_length; ++x) { // was incorrectly dp_length — over-iterated inner dimension when lengths differ
-      if (cmp(arr1[i - 1], arr2[x - 1])) {
+    for (let x = 1; x !== dp_inner_length; ++x) {
+      if (arr1[i - 1] === arr2[x - 1]||arr1[i - 1] == arr2[x - 1]||cmp(arr1[i - 1], arr2[x - 1])) {
         dp[i][x] = dp[i - 1][x - 1] + 1;
       } else {
         dp[i][x] = Math.max(dp[i][x - 1], dp[i - 1][x]);
