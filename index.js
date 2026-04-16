@@ -222,7 +222,7 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, comp, minS) {
 
   // Pre-DP rejection: the LCS can never exceed the shorter sequence's length
   if (threshold > 0 && arr2_length < threshold) {
-    return bigramIntersection(arr1,arr2); // upper-bound < threshold → can't match; return best-case
+    return bigramIntersection(arr1,arr2); // upper-bound < threshold → can't match; return common bigrams
   }
 
   const DPArray = selectArrayType(arr2_length);
