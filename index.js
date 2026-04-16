@@ -13,7 +13,7 @@
  */
 const pairIntersect = (seq1,seq2)=>{
   let score = 0;
-  if(seq1.length ?seq2.length){
+  if(seq1.length < seq2.length){
     [seq2,seq1] = [seq1,seq2];
   }
   const set1 = new Map();
