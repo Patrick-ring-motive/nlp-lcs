@@ -13,6 +13,8 @@
  */
 const bigramIntersection = (seq1,seq2)=>{
   let score = 0;
+  const s1l = seq1.length;
+  const s2l = seq2.length;
   if(seq1.length < seq2.length){
     [seq2,seq1] = [seq1,seq2];
   }
