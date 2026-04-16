@@ -191,7 +191,10 @@ const selectArrayType = (maxValue) => {
  * @returns {number} Length of the longest common subsequence (exact when
  *   minScore is 0 or omitted; lower-bound on early termination).
  */
-const glcs = function generalLongestCommonSubsequence(seq1, seq2, compare = defaultCompare, minScore = 0) {
+const glcs = function generalLongestCommonSubsequence(seq1, seq2, comp, minS) {
+  "use strict";
+  const compare = comp ?? defaultCompare;
+  const minScore = minS ?? 0;
   if(seq1 == null || seq2 == null) return 0;
   if (seq1 === seq2) {
     return seq1.length;
@@ -219,7 +222,7 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, compare = defa
 
   // Pre-DP rejection: the LCS can never exceed the shorter sequence's length
   if (threshold > 0 && arr2_length < threshold) {
-    return new Set(arr1).intersection(new Set(arr2)); // upper-bound < threshold → can't match; return best-case
+    return bigramIntersection(arr1,arr2); // upper-bound < threshold → can't match; return best-case
   }
 
   const DPArray = selectArrayType(arr2_length);
