@@ -198,60 +198,64 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, comp, minS) {
   "use strict";
   const compare = comp ?? defaultCompare;
   const minScore = minS ?? 0;
-  if(seq1 == null || seq2 == null) return 0;
-  if (seq1 === seq2) {
-    return seq1.length;
-  }
+  if (seq1 == null || seq2 == null) return 0;
+  if (seq1 === seq2) return len(seq1) ? seq1.length : [...seq1].length;
+
   const cmp = (typeof compare === 'function') ? compare : defaultCompare;
   const lcsMemo = getLcsMemo(cmp);
   const key = makeMemoKey(seq1, seq2);
   const cachedScore = lcsMemo.get(key);
-  if (cachedScore !== undefined) {
-    return cachedScore;
-  }
+  if (cachedScore !== undefined) return cachedScore;
 
-  // Resolve threshold — accept a number or a function(seq1, seq2) → number
   const threshold = (typeof minScore === 'function') ? minScore(seq1, seq2) : (minScore || 0);
 
-  let array1 = len(seq1) ? seq1 : [...seq1 ?? []];
-  let array2 = len(seq2) ? seq2 : [...seq2 ?? []];
-  // Always put the longer sequence on the outer dimension for consistency
+  let array1 = len(seq1) ? seq1 : [...seq1];
+  let array2 = len(seq2) ? seq2 : [...seq2];
   if (array2.length > array1.length) {
     [array1, array2] = [array2, array1];
   }
-  const [arr1, arr2] = [array1, array2];
-  const arr1_length = arr1.length;
-  const arr2_length = arr2.length;
 
-  // Pre-DP rejection: the LCS can never exceed the shorter sequence's length
+  const arr1_length = array1.length;
+  const arr2_length = array2.length;
+
   if (threshold > 0 && arr2_length < threshold) {
-    return bigramIntersection(arr1,arr2); // upper-bound < threshold → can't match; return common bigrams
+    return bigramIntersection(array1, array2);
   }
+  //const bisection 
 
   const DPArray = selectArrayType(arr2_length);
-  const dp = Array(arr1_length + 1).fill(0).map(() => new DPArray(arr2_length + 1));
-  const dp_length = dp.length; // arr1_length + 1, outer dimension
-  const dp_inner_length = arr2_length + 1; // inner dimension — distinct from dp_length
-  for (let i = 1; i !== dp_length; ++i) {
-    for (let x = 1; x !== dp_inner_length; ++x) {
-      if (arr1[i - 1] === arr2[x - 1]||arr1[i - 1] == arr2[x - 1]||cmp(arr1[i - 1], arr2[x - 1])) {
-        dp[i][x] = dp[i - 1][x - 1] + 1;
+  const width = arr2_length + 1;
+  const height = arr1_length + 1;
+  // Two rolling rows instead of (arr1_length + 1) rows
+  let prev = new DPArray(width);
+  let curr = new DPArray(width);
+
+  for (let i = 1; i !== height; ++i) {
+    const a1 = array1[i - 1];
+    for (let x = 1; x !== width; ++x) {
+      if (a1 === array2[x - 1] || cmp(a1, array2[x - 1])) {
+        curr[x] = prev[x - 1] + 1;
       } else {
-        dp[i][x] = Math.max(dp[i][x - 1], dp[i - 1][x]);
+        curr[x] = curr[x - 1] > prev[x] ? curr[x - 1] : prev[x];
       }
     }
-    // Early termination: best possible score from here can't reach the threshold
     if (threshold > 0) {
-      const bestPossible = dp[i][arr2_length] + (arr1_length - i);
+      const bestPossible = curr[arr2_length] + (arr1_length - i);
       if (bestPossible < threshold) {
-        return dp[i][arr2_length]; // lower-bound; intentionally NOT cached
+        return curr[arr2_length]; // lower-bound; not cached
       }
     }
+    // Swap rows — reuse the old prev buffer as the next curr
+    const tmp = prev;
+    prev = curr;
+    curr = tmp;
   }
-  const score = dp[arr1_length][arr2_length];
+
+  const score = prev[arr2_length];
   lcsMemo.set(key, score);
   return score;
 };
+
 
 /**
  * Extract the actual longest common subsequence (with backtracking).
