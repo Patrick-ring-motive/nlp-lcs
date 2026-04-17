@@ -334,7 +334,7 @@ const lcsSubsequence = (seq1, seq2, compare = defaultCompare) => {
  * @returns {string}
  */
 const norm = x => stringify(x).trim().normalize('NFD').toLowerCase().trim();
-
+const paretoThreshold = (seq1,seq2)=>Math.floor(0.8 * (Math.max(len(seq1), len(seq2))||0));
 /**
  * Normalized LCS — character-level LCS on unicode-normalized, lowercased strings.
  * Base comparator for word-level matching; feeds into wordMatch and sentenceLcs.
@@ -356,8 +356,8 @@ const nlcs = function normalizedLongestCommonSubsequence(str1, str2) {
  * @param {number} [score=0] - Pre-computed LCS score.
  * @returns {boolean} `true` when `score >= floor(0.8 * max(len1, len2))`.
  */
-const scoreMatch = (seq1, seq2, score=0) => {
-  return score >= Math.floor(0.8 * (Math.max(len(seq1), len(seq2))||0));
+const scoreMatch = (seq1, seq2, score=0,threshold) => {
+  return score >= (threshold||Math.floor(0.8 * (Math.max(len(seq1), len(seq2))||0)));
 };
 
 /**
@@ -378,7 +378,8 @@ const scoreMatch = (seq1, seq2, score=0) => {
  * @returns {boolean}
  */
 const lcsMatch = (seq1, seq2, lcs = glcs) => {
-  return scoreMatch(seq1,seq2,lcs(seq1, seq2));
+  const threshold = paretoThreshold(seq1,seq2);
+  return  lcs(seq1, seq2,null,threshold) >= threshold;
 };
 
 /**
@@ -391,19 +392,20 @@ const lcsMatch = (seq1, seq2, lcs = glcs) => {
  * @returns {{value: *, match: boolean, score: number}} Best candidate, whether it
  *   meets the threshold, and the raw score.
  */
-const bestLcsMatch=(seq1,seqList,lcs=glcs,matcher=scoreMatch)=>{
+const bestLcsMatch=(seq1,seqList,lcs=glcs)=>{
   let score = -1;
   let value;
   let match = false;
+  const threshold = paretoThreshold(seq1,seq2);
   for(const seq2 of seqList){
-    const matchScore = lcs(seq1,seq2);
+    const matchScore = lcs(seq1,seq2,null,threshold);
     if(matchScore > score){
       score = matchScore;
       value = seq2;
     }
   }
   if (score < 0) return { value, match, score: 0 };
-  match = matcher(seq1,value,score);
+  match = matcher(seq1,value,score,threshold);
   return {value,match,score};
 };
 
