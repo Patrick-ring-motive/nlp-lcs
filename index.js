@@ -412,37 +412,37 @@ const bestLcsMatch = (seq1, seqList, lcs = glcs, matcher = scoreMatch, threshold
   let score = -1;
   let value;
   let match = false;
-  const t = threshold ?? paretoThreshold(seq1, seqList[0] ?? []);
   for (const seq2 of seqList) {
-    const matchScore = lcs(seq1, seq2, null, t);
+    const threshold = paretoThreshold(seq1, seq2);
+    const matchScore = lcs(seq1, seq2, null, threshold);
     if (matchScore > score) {
       score = matchScore;
       value = seq2;
     }
   }
   if (score < 0) return { value, match, score: 0 };
-  match = matcher(seq1, value, score, t);
+  match = matcher(seq1, value, score, paretoThreshold(seq1, value));
   return { value, match, score };
 };
 
-const firstLcsMatch = (seq1, seqList, lcs = glcs, matcher = scoreMatch, threshold) => {
+const firstLcsMatch = (seq1, seqList, lcs = glcs, matcher = scoreMatch) => {
   let score = -1;
   let value;
   let match = false;
-  const t = threshold ?? paretoThreshold(seq1, seqList[0] ?? []);
   for (const seq2 of seqList) {
-    const matchScore = lcs(seq1, seq2, null, t);
+    const threshold = paretoThreshold(seq1, seq2);
+    const matchScore = lcs(seq1, seq2, null, threshold);
     if (matchScore > score) {
       score = matchScore;
       value = seq2;
     }
-    if (score >= t) {
-      match = matcher(seq1, value, score, t);
+    if (score >= threshold) {
+      match = matcher(seq1, value, score, threshold);
       return { value, match, score };
     }
   }
   if (score < 0) return { value, match, score: 0 };
-  match = matcher(seq1, value, score, t);
+  match = matcher(seq1, value, score, paretoThreshold(seq1,value));
   return { value, match, score };
 };
 
