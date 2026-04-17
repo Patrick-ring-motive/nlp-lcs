@@ -183,6 +183,9 @@ const selectArrayType = (maxValue) => {
  * (partial, lower-bound) score. Early-return results are **not** cached so
  * future calls without a threshold still compute the exact answer.
  *
+ * The bigram gate is only applied for sequences longer than 64 elements to
+ * avoid Map allocation overhead exceeding the DP cost on short inputs.
+ *
  * @param {Iterable} seq1
  * @param {Iterable} seq2
  * @param {function} compare - Element comparator. Defaults to strict equality.
@@ -221,13 +224,19 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, comp, minS) {
   if (threshold > 0 && arr2_length < threshold) {
     return bigramIntersection(array1, array2);
   }
-  const bisection = bigramIntersection(array1, array2);
-  if (threshold > 0 && bisection < threshold) {
-    return bisection;
+
+  // Bigram gate: only worth the Map allocation overhead on longer sequences
+  if (threshold > 0 && arr1_length > 64) {
+    const bisection = bigramIntersection(array1, array2);
+    if (bisection < threshold) {
+      return bisection;
+    }
   }
+
   const DPArray = selectArrayType(arr2_length);
   const width = arr2_length + 1;
   const height = arr1_length + 1;
+
   // Two rolling rows instead of (arr1_length + 1) rows
   let prev = new DPArray(width);
   let curr = new DPArray(width);
@@ -257,11 +266,14 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, comp, minS) {
   lcsMemo.set(key, score);
   return score;
 };
-const paretoThreshold = (seq1,seq2)=>Math.floor(0.8 * (Math.max(len(seq1), len(seq2))||0));
-const plcs = (seq1,seq2)=>{
-  const threshold = paretoThreshold(seq1,seq2);
-  return glcs(seq1,seq2,null,threshold);
+
+const paretoThreshold = (seq1, seq2) => Math.floor(0.8 * (Math.max(len(seq1), len(seq2)) || 0));
+
+const plcs = (seq1, seq2) => {
+  const threshold = paretoThreshold(seq1, seq2);
+  return glcs(seq1, seq2, null, threshold);
 };
+
 /**
  * Extract the actual longest common subsequence (with backtracking).
  *
@@ -347,7 +359,7 @@ const norm = x => stringify(x).trim().normalize('NFD').toLowerCase().trim();
  * @returns {number}
  */
 const nlcs = function normalizedLongestCommonSubsequence(str1, str2) {
-  return plcs(norm(str1),norm(str2));
+  return plcs(norm(str1), norm(str2));
 };
 
 /**
@@ -359,8 +371,8 @@ const nlcs = function normalizedLongestCommonSubsequence(str1, str2) {
  * @param {number} [score=0] - Pre-computed LCS score.
  * @returns {boolean} `true` when `score >= floor(0.8 * max(len1, len2))`.
  */
-const scoreMatch = (seq1, seq2, score=0,threshold) => {
-  return score >= (threshold||Math.floor(0.8 * (Math.max(len(seq1), len(seq2))||0)));
+const scoreMatch = (seq1, seq2, score = 0, threshold) => {
+  return score >= (threshold || Math.floor(0.8 * (Math.max(len(seq1), len(seq2)) || 0)));
 };
 
 /**
@@ -381,8 +393,8 @@ const scoreMatch = (seq1, seq2, score=0,threshold) => {
  * @returns {boolean}
  */
 const lcsMatch = (seq1, seq2, lcs = glcs) => {
-  const threshold = paretoThreshold(seq1,seq2);
-  return  lcs(seq1, seq2,null,threshold) >= threshold;
+  const threshold = paretoThreshold(seq1, seq2);
+  return lcs(seq1, seq2, null, threshold) >= threshold;
 };
 
 /**
@@ -392,48 +404,50 @@ const lcsMatch = (seq1, seq2, lcs = glcs) => {
  * @param {Iterable[]} seqList - Candidate sequences to compare against.
  * @param {function} [lcs=glcs] - LCS scoring function.
  * @param {function} [matcher=scoreMatch] - Threshold function `(seq1, best, score) → boolean`.
+ * @param {number} [threshold] - Optional pre-computed threshold.
  * @returns {{value: *, match: boolean, score: number}} Best candidate, whether it
  *   meets the threshold, and the raw score.
  */
-const bestLcsMatch=(seq1,seqList,lcs=glcs,matcher=scoreMatch,threshold)=>{
+const bestLcsMatch = (seq1, seqList, lcs = glcs, matcher = scoreMatch, threshold) => {
   let score = -1;
   let value;
   let match = false;
-  threshold ||= paretoThreshold(seq1,seq2);
-  for(const seq2 of seqList){
-    const matchScore = lcs(seq1,seq2,null,threshold);
-    if(matchScore > score){
+  const t = threshold ?? paretoThreshold(seq1, seqList[0] ?? []);
+  for (const seq2 of seqList) {
+    const matchScore = lcs(seq1, seq2, null, t);
+    if (matchScore > score) {
       score = matchScore;
       value = seq2;
     }
   }
   if (score < 0) return { value, match, score: 0 };
-  match = matcher(seq1,value,score,threshold);
-  return {value,match,score};
+  match = matcher(seq1, value, score, t);
+  return { value, match, score };
 };
 
-const firstLcsMatch=(seq1,seqList,lcs=glcs,matcher=scoreMatch,threshold)=>{
+const firstLcsMatch = (seq1, seqList, lcs = glcs, matcher = scoreMatch, threshold) => {
   let score = -1;
   let value;
   let match = false;
-  threshold ||= paretoThreshold(seq1,seq2);
-  for(const seq2 of seqList){
-    const matchScore = lcs(seq1,seq2,null,threshold);
-    if(matchScore > score){
+  const t = threshold ?? paretoThreshold(seq1, seqList[0] ?? []);
+  for (const seq2 of seqList) {
+    const matchScore = lcs(seq1, seq2, null, t);
+    if (matchScore > score) {
       score = matchScore;
       value = seq2;
     }
-    if(score >= threshold){
-      match = matcher(seq1,value,score,threshold);
-      return {value,match,score};
+    if (score >= t) {
+      match = matcher(seq1, value, score, t);
+      return { value, match, score };
     }
   }
   if (score < 0) return { value, match, score: 0 };
-  match = matcher(seq1,value,score,threshold);
-  return {value,match,score};
+  match = matcher(seq1, value, score, t);
+  return { value, match, score };
 };
 
-const paretoMin=(seq1,seq2)=>Math.floor(0.8 * (Math.min(len(seq1), len(seq2))||0));
+const paretoMin = (seq1, seq2) => Math.floor(0.8 * (Math.min(len(seq1), len(seq2)) || 0));
+
 /**
  * Test whether a raw LCS score meets the 80 % containment threshold
  * relative to the *shorter* of two sequences.
@@ -443,9 +457,9 @@ const paretoMin=(seq1,seq2)=>Math.floor(0.8 * (Math.min(len(seq1), len(seq2))||0
  * @param {number} [score=0] - Pre-computed LCS score.
  * @returns {boolean} `true` when `score >= floor(0.8 * min(len1, len2))`.
  */
-const scoreHas = (seq1, seq2, score=0,threshold) => {
-  threshold ||= paretoMin(seq1,seq2);
-  return score >= threshold;
+const scoreHas = (seq1, seq2, score = 0, threshold) => {
+  const t = threshold ?? paretoMin(seq1, seq2);
+  return score >= t;
 };
 
 /**
@@ -462,8 +476,8 @@ const scoreHas = (seq1, seq2, score=0,threshold) => {
  * @returns {boolean}
  */
 const lcsHas = (seq1, seq2, lcs = glcs) => {
-  const threshold = paretoMin(seq1,seq2);
-  return scoreHas(seq1,seq2,lcs(seq1, seq2,null,threshold),threshold);
+  const threshold = paretoMin(seq1, seq2);
+  return scoreHas(seq1, seq2, lcs(seq1, seq2, null, threshold), threshold);
 };
 
 /**
@@ -475,8 +489,9 @@ const lcsHas = (seq1, seq2, lcs = glcs) => {
  * @param {function} [lcs=glcs] - LCS scoring function.
  * @returns {{value: *, match: boolean, score: number}}
  */
-const bestLcsHas=(seq1,seqList,lcs=glcs)=>{
-  return bestLcsMatch(seq1,seqList,lcs,scoreHas,paretoMin(seq1,seq2));
+const bestLcsHas = (seq1, seqList, lcs = glcs) => {
+  const t = paretoMin(seq1, seqList[0] ?? []);
+  return bestLcsMatch(seq1, seqList, lcs, scoreHas, t);
 };
 
 /**
@@ -500,8 +515,8 @@ const wordMatch = (seq1, seq2) => {
  * @param {string[]} seqList - Candidate words.
  * @returns {{value: string, match: boolean, score: number}}
  */
-const bestWordMatch=(seq1,seqList)=>{
-  return bestLcsMatch(seq1,seqList,nlcs,wordMatch);
+const bestWordMatch = (seq1, seqList) => {
+  return bestLcsMatch(seq1, seqList, nlcs, wordMatch);
 };
 
 /**
@@ -525,11 +540,9 @@ const bestWordMatch=(seq1,seqList)=>{
  * @returns {number}
  */
 const sentenceLcs = (words1, words2) => {
-  const threshold = paretoThreshold(seq1,seq2);
-  return glcs(words1, words2,wordMatch,threshold);
+  const threshold = paretoThreshold(words1, words2);
+  return glcs(words1, words2, wordMatch, threshold);
 };
-
-
 
 /**
  * Sentence-level fuzzy match using LCWS.
@@ -552,8 +565,8 @@ const sentenceMatch = (seq1, seq2) => {
  * @param {string[][]} seqList - Candidate tokenized sentences.
  * @returns {{value: string[], match: boolean, score: number}}
  */
-const bestSentenceMatch=(seq1,seqList)=>{
-  return bestLcsMatch(seq1,seqList,sentenceLcs,sentenceMatch);
+const bestSentenceMatch = (seq1, seqList) => {
+  return bestLcsMatch(seq1, seqList, sentenceLcs, sentenceMatch);
 };
 
 /**
@@ -568,11 +581,11 @@ const bestSentenceMatch=(seq1,seqList)=>{
  *
  * @param {Iterable} seq1
  * @param {Iterable} seq2
- * @param {function} lcs - LCS function to use. Defaults to glcs.
+ * @param {function} lcs - LCS function to use. Defaults to plcs.
  * @returns {number}
  */
-const weightedLcs = (seq1, seq2, lcs = glcs) => {
-  return plcs(seq1, seq2) * (Math.min(len(seq1), len(seq2))||0) / (Math.max(len(seq1), len(seq2), 1)||1);
+const weightedLcs = (seq1, seq2, lcs = plcs) => {
+  return lcs(seq1, seq2) * (Math.min(len(seq1), len(seq2)) || 0) / (Math.max(len(seq1), len(seq2), 1) || 1);
 };
 
 /**
@@ -582,13 +595,14 @@ const weightedLcs = (seq1, seq2, lcs = glcs) => {
  * @param {Iterable[]} seqList - Candidate sequences.
  * @returns {{value: *, match: boolean, score: number}}
  */
-const bestWeightedMatch=(seq1,seqList)=>{
-  return bestLcsMatch(seq1,seqList,weightedLcs);
+const bestWeightedMatch = (seq1, seqList) => {
+  return bestLcsMatch(seq1, seqList, weightedLcs);
 };
 
-const firstWeightedMatch=(seq1,seqList)=>{
-  return firstLcsMatch(seq1,seqList,weightedLcs);
+const firstWeightedMatch = (seq1, seqList) => {
+  return firstLcsMatch(seq1, seqList, weightedLcs);
 };
+
 /**
  * Weighted LCS at the character level using normalized comparison.
  * Combines `weightedLcs` with `nlcs` for single-word scoring.
@@ -598,7 +612,7 @@ const firstWeightedMatch=(seq1,seqList)=>{
  * @returns {number}
  */
 const weightedWordLcs = (seq1, seq2) => {
-  return weightedLcs(seq1,seq2,nlcs);
+  return weightedLcs(seq1, seq2, nlcs);
 };
 
 /**
@@ -609,8 +623,8 @@ const weightedWordLcs = (seq1, seq2) => {
  * @param {string[]} seqList - Candidate words.
  * @returns {{value: string, match: boolean, score: number}}
  */
-const bestWeightedWordMatch=(seq1,seqList)=>{
-  return bestLcsMatch(seq1,seqList,weightedWordLcs);
+const bestWeightedWordMatch = (seq1, seqList) => {
+  return bestLcsMatch(seq1, seqList, weightedWordLcs);
 };
 
 /**
@@ -630,11 +644,11 @@ const bestWeightedWordMatch=(seq1,seqList)=>{
  *
  * @param {Iterable} seq1
  * @param {Iterable} seq2
- * @param {function} lcs - LCS function to use. Defaults to glcs.
+ * @param {function} lcs - LCS function to use. Defaults to plcs.
  * @returns {number}
  */
 const contextLcs = (seq1, seq2, lcs = plcs) => {
-  return lcs(seq1, seq2) + (Math.max(len(seq1), len(seq2))||0) / (Math.min(len(seq1), len(seq2)) || 1);
+  return lcs(seq1, seq2) + (Math.max(len(seq1), len(seq2)) || 0) / (Math.min(len(seq1), len(seq2)) || 1);
 };
 
 /**
@@ -644,8 +658,8 @@ const contextLcs = (seq1, seq2, lcs = plcs) => {
  * @param {Iterable[]} seqList - Candidate sequences.
  * @returns {{value: *, match: boolean, score: number}}
  */
-const bestContextMatch=(seq1,seqList)=>{
-  return bestLcsMatch(seq1,seqList,contextLcs);
+const bestContextMatch = (seq1, seqList) => {
+  return bestLcsMatch(seq1, seqList, contextLcs);
 };
 
 /**
@@ -669,12 +683,12 @@ const contextWordLcs = (seq1, seq2) => {
  * @param {string[]} seqList - Candidate words.
  * @returns {{value: string, match: boolean, score: number}}
  */
-const bestContextWordMatch=(seq1,seqList)=>{
-  return bestLcsMatch(seq1,seqList,contextWordLcs);
+const bestContextWordMatch = (seq1, seqList) => {
+  return bestLcsMatch(seq1, seqList, contextWordLcs);
 };
 
-const firstContextWordMatch=(seq1,seqList)=>{
-  return firstLcsMatch(seq1,seqList,contextWordLcs);
+const firstContextWordMatch = (seq1, seqList) => {
+  return firstLcsMatch(seq1, seqList, contextWordLcs);
 };
 
 /**
@@ -690,7 +704,7 @@ const firstContextWordMatch=(seq1,seqList)=>{
  *
  * @param {Iterable} seq1
  * @param {Iterable} seq2
- * @param {function} lcs - LCS function to use. Defaults to glcs.
+ * @param {function} lcs - LCS function to use. Defaults to plcs.
  * @returns {number} Similarity in [0, 1].
  */
 const diceLcs = (seq1, seq2, lcs = plcs) => {
@@ -720,7 +734,6 @@ const diceWordLcs = (seq1, seq2) => {
 const diceSentenceLcs = (words1, words2) => {
   return diceLcs(words1, words2, sentenceLcs);
 };
-
 
 /**
  * Split a string into whitespace-delimited tokens.
