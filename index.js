@@ -257,8 +257,11 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, comp, minS) {
   lcsMemo.set(key, score);
   return score;
 };
-
-
+const paretoThreshold = (seq1,seq2)=>Math.floor(0.8 * (Math.max(len(seq1), len(seq2))||0));
+const plcs = (seq1,seq2)=>{
+  const threshold = paretoThreshold(seq1,seq2);
+  return glcs(seq1,seq2,null,threshold);
+};
 /**
  * Extract the actual longest common subsequence (with backtracking).
  *
@@ -334,7 +337,7 @@ const lcsSubsequence = (seq1, seq2, compare = defaultCompare) => {
  * @returns {string}
  */
 const norm = x => stringify(x).trim().normalize('NFD').toLowerCase().trim();
-const paretoThreshold = (seq1,seq2)=>Math.floor(0.8 * (Math.max(len(seq1), len(seq2))||0));
+
 /**
  * Normalized LCS — character-level LCS on unicode-normalized, lowercased strings.
  * Base comparator for word-level matching; feeds into wordMatch and sentenceLcs.
@@ -344,7 +347,7 @@ const paretoThreshold = (seq1,seq2)=>Math.floor(0.8 * (Math.max(len(seq1), len(s
  * @returns {number}
  */
 const nlcs = function normalizedLongestCommonSubsequence(str1, str2) {
-  return glcs(norm(str1), norm(str2));
+  return plcs(norm(str1),norm(str2));
 };
 
 /**
@@ -392,11 +395,11 @@ const lcsMatch = (seq1, seq2, lcs = glcs) => {
  * @returns {{value: *, match: boolean, score: number}} Best candidate, whether it
  *   meets the threshold, and the raw score.
  */
-const bestLcsMatch=(seq1,seqList,lcs=glcs)=>{
+const bestLcsMatch=(seq1,seqList,lcs=glcs,matcher=scoreMatch,threshold)=>{
   let score = -1;
   let value;
   let match = false;
-  const threshold = paretoThreshold(seq1,seq2);
+  threshold ||= paretoThreshold(seq1,seq2);
   for(const seq2 of seqList){
     const matchScore = lcs(seq1,seq2,null,threshold);
     if(matchScore > score){
@@ -409,6 +412,28 @@ const bestLcsMatch=(seq1,seqList,lcs=glcs)=>{
   return {value,match,score};
 };
 
+const firstLcsMatch=(seq1,seqList,lcs=glcs,matcher=scoreMatch,threshold)=>{
+  let score = -1;
+  let value;
+  let match = false;
+  threshold ||= paretoThreshold(seq1,seq2);
+  for(const seq2 of seqList){
+    const matchScore = lcs(seq1,seq2,null,threshold);
+    if(matchScore > score){
+      score = matchScore;
+      value = seq2;
+    }
+    if(score >= threshold){
+      match = matcher(seq1,value,score,threshold);
+      return {value,match,score};
+    }
+  }
+  if (score < 0) return { value, match, score: 0 };
+  match = matcher(seq1,value,score,threshold);
+  return {value,match,score};
+};
+
+const paretoMin=(seq1,seq2)=>Math.floor(0.8 * (Math.min(len(seq1), len(seq2))||0));
 /**
  * Test whether a raw LCS score meets the 80 % containment threshold
  * relative to the *shorter* of two sequences.
@@ -418,8 +443,9 @@ const bestLcsMatch=(seq1,seqList,lcs=glcs)=>{
  * @param {number} [score=0] - Pre-computed LCS score.
  * @returns {boolean} `true` when `score >= floor(0.8 * min(len1, len2))`.
  */
-const scoreHas = (seq1, seq2, score=0) => {
-  return score >= Math.floor(0.8 * (Math.min(len(seq1), len(seq2))||0));
+const scoreHas = (seq1, seq2, score=0,threshold) => {
+  threshold ||= paretoMin(seq1,seq2);
+  return score >= threshold;
 };
 
 /**
@@ -436,7 +462,8 @@ const scoreHas = (seq1, seq2, score=0) => {
  * @returns {boolean}
  */
 const lcsHas = (seq1, seq2, lcs = glcs) => {
-  return scoreHas(seq1,seq2,lcs(seq1, seq2));
+  const threshold = paretoMin(seq1,seq2);
+  return scoreHas(seq1,seq2,lcs(seq1, seq2,null,threshold),threshold);
 };
 
 /**
@@ -449,7 +476,7 @@ const lcsHas = (seq1, seq2, lcs = glcs) => {
  * @returns {{value: *, match: boolean, score: number}}
  */
 const bestLcsHas=(seq1,seqList,lcs=glcs)=>{
-  return bestLcsMatch(seq1,seqList,lcs,scoreHas);
+  return bestLcsMatch(seq1,seqList,lcs,scoreHas,paretoMin(seq1,seq2));
 };
 
 /**
@@ -498,7 +525,8 @@ const bestWordMatch=(seq1,seqList)=>{
  * @returns {number}
  */
 const sentenceLcs = (words1, words2) => {
-  return glcs(words1, words2, wordMatch);
+  const threshold = paretoThreshold(seq1,seq2);
+  return glcs(words1, words2,wordMatch,threshold);
 };
 
 
@@ -544,7 +572,7 @@ const bestSentenceMatch=(seq1,seqList)=>{
  * @returns {number}
  */
 const weightedLcs = (seq1, seq2, lcs = glcs) => {
-  return lcs(seq1, seq2) * (Math.min(len(seq1), len(seq2))||0) / (Math.max(len(seq1), len(seq2), 1)||1);
+  return plcs(seq1, seq2) * (Math.min(len(seq1), len(seq2))||0) / (Math.max(len(seq1), len(seq2), 1)||1);
 };
 
 /**
@@ -558,6 +586,9 @@ const bestWeightedMatch=(seq1,seqList)=>{
   return bestLcsMatch(seq1,seqList,weightedLcs);
 };
 
+const firstWeightedMatch=(seq1,seqList)=>{
+  return firstLcsMatch(seq1,seqList,weightedLcs);
+};
 /**
  * Weighted LCS at the character level using normalized comparison.
  * Combines `weightedLcs` with `nlcs` for single-word scoring.
@@ -602,7 +633,7 @@ const bestWeightedWordMatch=(seq1,seqList)=>{
  * @param {function} lcs - LCS function to use. Defaults to glcs.
  * @returns {number}
  */
-const contextLcs = (seq1, seq2, lcs = glcs) => {
+const contextLcs = (seq1, seq2, lcs = plcs) => {
   return lcs(seq1, seq2) + (Math.max(len(seq1), len(seq2))||0) / (Math.min(len(seq1), len(seq2)) || 1);
 };
 
@@ -642,6 +673,10 @@ const bestContextWordMatch=(seq1,seqList)=>{
   return bestLcsMatch(seq1,seqList,contextWordLcs);
 };
 
+const firstContextWordMatch=(seq1,seqList)=>{
+  return firstLcsMatch(seq1,seqList,contextWordLcs);
+};
+
 /**
  * Sørensen–Dice similarity using LCS.
  *
@@ -658,7 +693,7 @@ const bestContextWordMatch=(seq1,seqList)=>{
  * @param {function} lcs - LCS function to use. Defaults to glcs.
  * @returns {number} Similarity in [0, 1].
  */
-const diceLcs = (seq1, seq2, lcs = glcs) => {
+const diceLcs = (seq1, seq2, lcs = plcs) => {
   const total = len(seq1) + len(seq2);
   if (total === 0) return 0;
   return (2 * lcs(seq1, seq2)) / total;
