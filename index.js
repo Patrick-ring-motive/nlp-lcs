@@ -518,6 +518,9 @@ const wordMatch = (seq1, seq2) => {
 const bestWordMatch = (seq1, seqList) => {
   return bestLcsMatch(seq1, seqList, nlcs, wordMatch);
 };
+const firstWordMatch = (seq1, seqList) => {
+  return firstLcsMatch(seq1, seqList, nlcs, wordMatch);
+};
 
 /**
  * LCWS — Longest Common Word Subsequence (recursive / hierarchical LCS).
@@ -625,6 +628,10 @@ const weightedWordLcs = (seq1, seq2) => {
  */
 const bestWeightedWordMatch = (seq1, seqList) => {
   return bestLcsMatch(seq1, seqList, weightedWordLcs);
+};
+
+const firstWeightedWordMatch = (seq1, seqList) => {
+  return firstLcsMatch(seq1, seqList, weightedWordLcs);
 };
 
 /**
@@ -861,8 +868,10 @@ const word = {
   lcs: nlcs,
   match: wordMatch,
   bestMatch: bestWordMatch,
+  firstMatch: firstWordMatch,
   weighted: weightedWordLcs,
   bestWeighted: bestWeightedWordMatch,
+  firstWeighted: firstWeightedWordMatch,
   context: contextWordLcs,
   bestContext: bestContextWordMatch,
   sorted: sortedWordLcs,
