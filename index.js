@@ -226,7 +226,7 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, comp, minS) {
   }
 
   // Bigram gate: only worth the Map allocation overhead on longer sequences
-  if (threshold > 0 && arr1_length > 64) {
+  if (threshold > 0 && (arr1_length > 64 || compare !== defaultCompare)) {
     const bisection = bigramIntersection(array1, array2);
     if (bisection < threshold) {
       return bisection;
