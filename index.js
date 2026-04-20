@@ -11,6 +11,21 @@
  * with memoization making the recursive cases tractable via high cache hit rates
  * on repeated vocabulary across a corpus.
  */
+const freqBound = (a, b) => {
+  const map = new Map();
+  for (const x of a) {
+    map.set(x, (map.get(x) || 0) + 1);
+  }
+  let bound = 0;
+  for (const x of b) {
+    const c = map.get(x);
+    if (c > 0) {
+      bound++;
+      map.set(x, c - 1);
+    }
+  }
+  return bound;
+};
 const bigramIntersection = (seq1,seq2)=>{
   "use strict";
   let score = 0;
@@ -222,16 +237,16 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, comp, minS) {
   const arr2_length = array2.length;
 
   if (threshold > 0 && arr2_length < threshold) {
-    return bigramIntersection(array1, array2);
+    return freqBound(array1, array2);
   }
 
   // Bigram gate: only worth the Map allocation overhead on longer sequences
-  if (threshold > 0 && (arr1_length > 64 || compare !== defaultCompare)) {
-    const bisection = bigramIntersection(array1, array2);
-    if (bisection < threshold) {
-      return bisection;
+  if (threshold > 0) {
+    const bound = freqBound(array1, array2);
+    if (bound < threshold) {
+      return bound;
     }
-  }
+  } 
 
   const DPArray = selectArrayType(arr2_length);
   const width = arr2_length + 1;
