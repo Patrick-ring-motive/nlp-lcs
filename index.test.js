@@ -1,4 +1,7 @@
-const { describe, it } = require('node:test');
+const {
+  describe,
+  it
+} = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
@@ -14,18 +17,46 @@ const {
 } = require('./index.js');
 
 // Destructure namespaced functions for convenience in tests
-const { lcs: glcs, subsequence: lcsSubsequence, scoreMatch, match: lcsMatch, bestMatch: bestLcsMatch,
-  scoreHas, has: lcsHas, bestHas: bestLcsHas, weighted: weightedLcs,
-  bestWeighted: bestWeightedMatch, context: contextLcs,
-  bestContext: bestContextMatch, sorted: sortedLcs,
-  dice: diceLcs } = seq;
-const { norm, lcs: nlcs, match: wordMatch, bestMatch: bestWordMatch,
-  weighted: weightedWordLcs, bestWeighted: bestWeightedWordMatch,
-  context: contextWordLcs, bestContext: bestContextWordMatch,
-  sorted: sortedWordLcs, dice: diceWordLcs } = word;
-const { lcs: sentenceLcs, match: sentenceMatch, bestMatch: bestSentenceMatch,
-  tokenize, toSentences, toPhrases, dedupeSegments, dedupeSentences,
-  dedupePhrases, dice: diceSentenceLcs } = sentence;
+const {
+  lcs: glcs,
+  subsequence: lcsSubsequence,
+  scoreMatch,
+  match: lcsMatch,
+  bestMatch: bestLcsMatch,
+  scoreHas,
+  has: lcsHas,
+  bestHas: bestLcsHas,
+  weighted: weightedLcs,
+  bestWeighted: bestWeightedMatch,
+  context: contextLcs,
+  bestContext: bestContextMatch,
+  sorted: sortedLcs,
+  dice: diceLcs
+} = seq;
+const {
+  norm,
+  lcs: nlcs,
+  match: wordMatch,
+  bestMatch: bestWordMatch,
+  weighted: weightedWordLcs,
+  bestWeighted: bestWeightedWordMatch,
+  context: contextWordLcs,
+  bestContext: bestContextWordMatch,
+  sorted: sortedWordLcs,
+  dice: diceWordLcs
+} = word;
+const {
+  lcs: sentenceLcs,
+  match: sentenceMatch,
+  bestMatch: bestSentenceMatch,
+  tokenize,
+  toSentences,
+  toPhrases,
+  dedupeSegments,
+  dedupeSentences,
+  dedupePhrases,
+  dice: diceSentenceLcs
+} = sentence;
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * Helpers
@@ -66,8 +97,8 @@ describe('createLruCache', () => {
     c.set('a', 1);
     c.set('b', 2);
     c.set('c', 3);
-    c.get('a');     // refresh 'a' — 'b' is now oldest
-    c.set('d', 4);  // should evict 'b'
+    c.get('a'); // refresh 'a' — 'b' is now oldest
+    c.set('d', 4); // should evict 'b'
     assert.equal(c.get('a'), 1);
     assert.equal(c.get('b'), undefined);
   });
@@ -94,7 +125,9 @@ describe('stringify', () => {
     assert.equal(stringify('hello'), 'hello');
   });
   it('JSON-stringifies objects', () => {
-    assert.equal(stringify({ a: 1 }), '{"a":1}');
+    assert.equal(stringify({
+      a: 1
+    }), '{"a":1}');
   });
   it('JSON-stringifies arrays', () => {
     assert.equal(stringify([1, 2]), '[1,2]');
@@ -298,8 +331,14 @@ describe('lcsSubsequence', () => {
   });
 
   it('returns empty for null inputs', () => {
-    assert.deepEqual(lcsSubsequence(null, 'abc'), { score: 0, subsequence: [] });
-    assert.deepEqual(lcsSubsequence('abc', null), { score: 0, subsequence: [] });
+    assert.deepEqual(lcsSubsequence(null, 'abc'), {
+      score: 0,
+      subsequence: []
+    });
+    assert.deepEqual(lcsSubsequence('abc', null), {
+      score: 0,
+      subsequence: []
+    });
   });
 
   it('returns empty for completely different strings', () => {
@@ -369,7 +408,9 @@ describe('lcsSubsequence', () => {
   it('returned subsequence is a valid subsequence of both inputs', () => {
     const a = 'abcbdab';
     const b = 'bdcaba';
-    const { subsequence } = lcsSubsequence(a, b);
+    const {
+      subsequence
+    } = lcsSubsequence(a, b);
     // Check that subsequence appears in order in both strings
     const isSubseqOf = (sub, full) => {
       let idx = 0;
@@ -420,7 +461,7 @@ describe('nlcs', () => {
 
 describe('scoreMatch', () => {
   it('returns true when score ≥ 80% of max length', () => {
-    assert.equal(scoreMatch('abcde', 'abcde', 5), true);  // 5 >= floor(0.8*5) = 4
+    assert.equal(scoreMatch('abcde', 'abcde', 5), true); // 5 >= floor(0.8*5) = 4
     assert.equal(scoreMatch('abcde', 'abcde', 4), true);
   });
   it('returns false when score < 80% of max length', () => {
@@ -433,7 +474,7 @@ describe('lcsMatch', () => {
     assert.equal(lcsMatch('hello', 'hello'), true);
   });
   it('returns true for highly similar strings', () => {
-    assert.equal(lcsMatch('hello', 'helo'), true);  // LCS=4, threshold=floor(0.8*5)=4
+    assert.equal(lcsMatch('hello', 'helo'), true); // LCS=4, threshold=floor(0.8*5)=4
   });
   it('returns false for dissimilar strings', () => {
     assert.equal(lcsMatch('hello', 'world'), false);
@@ -628,7 +669,7 @@ describe('contextLcs', () => {
     assert.ok(ctx > plain);
   });
   it('rewards longer containing sequence', () => {
-    const short = contextLcs('ab', 'xabx');    // LCS + 4/2 = 2+2 = 4
+    const short = contextLcs('ab', 'xabx'); // LCS + 4/2 = 2+2 = 4
     const long = contextLcs('ab', 'xabxxxxxx'); // LCS + 9/2 = 2+4.5 = 6.5
     assert.ok(long > short);
   });
