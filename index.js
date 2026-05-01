@@ -26,36 +26,36 @@ const freqBound = (a, b) => {
   }
   return bound;
 };
-const bigramIntersection = (seq1,seq2)=>{
+const bigramIntersection = (seq1, seq2) => {
   "use strict";
   let score = 0;
   const s1l = seq1.length;
-  if(seq1 === seq2){
+  if (seq1 === seq2) {
     return s1l
   }
   const s2l = seq2.length;
-  if(s1l < s2l){
-    [seq2,seq1] = [seq1,seq2];
+  if (s1l < s2l) {
+    [seq2, seq1] = [seq1, seq2];
   }
   const seq1len = seq1.length;
   const set1 = new Map();
   const set2 = new Map();
   const seq1_length = seq1len + 1;
   const seq2_length = seq2.length + 1;
-  for(let i = 0; i !== seq1_length; ++i){
-    const key = String(seq1[i-1]) + String(seq1[i]);
-    let count  = set1.get(key) ?? 0;
-    set1.set(key,count+1);    
+  for (let i = 0; i !== seq1_length; ++i) {
+    const key = String(seq1[i - 1]) + String(seq1[i]);
+    let count = set1.get(key) ?? 0;
+    set1.set(key, count + 1);
   }
-  for(let i = 0; i !== seq2_length; ++i){
-    const key = String(seq2[i-1]) + String(seq2[i]);
-    let count  = set2.get(key) ?? 0;
-    set2.set(key,count+1);    
+  for (let i = 0; i !== seq2_length; ++i) {
+    const key = String(seq2[i - 1]) + String(seq2[i]);
+    let count = set2.get(key) ?? 0;
+    set2.set(key, count + 1);
   }
-  for(const [key,value] of set1){
-    score += Math.min(value,set2.get(key)??0);
+  for (const [key, value] of set1) {
+    score += Math.min(value, set2.get(key) ?? 0);
   }
-  return Math.min(score,seq1len);
+  return Math.min(score, seq1len);
 };
 /**
  * Get the length of any value.
@@ -118,11 +118,11 @@ const isString = x => typeof x === 'string' || x instanceof String || x?.constru
  */
 const stringify = x => {
   try {
-    if(isString(x)) return String(x);
+    if (isString(x)) return String(x);
     return String(JSON.stringify(x));
   } catch {
     return String(x);
-  } 
+  }
 };
 
 /**
@@ -169,8 +169,8 @@ const makeMemoKey = (seq1, seq2) => {
  * @returns {typeof Uint8Array | typeof Uint16Array | typeof Uint32Array | typeof Array}
  */
 const selectArrayType = (maxValue) => {
-  if (maxValue <= 0xFF)       return Uint8Array;
-  if (maxValue <= 0xFFFF)     return Uint16Array;
+  if (maxValue <= 0xFF) return Uint8Array;
+  if (maxValue <= 0xFFFF) return Uint16Array;
   if (maxValue <= 0xFFFFFFFF) return Uint32Array;
   return Array;
 };
@@ -246,7 +246,7 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, comp, minS) {
     if (bound < threshold) {
       return bound;
     }
-  } 
+  }
 
   const DPArray = selectArrayType(arr2_length);
   const width = arr2_length + 1;
@@ -305,9 +305,15 @@ const plcs = (seq1, seq2) => {
  *   matched elements drawn from `seq1` (or `seq2` when swapped to outer).
  */
 const lcsSubsequence = (seq1, seq2, compare = defaultCompare) => {
-  if (seq1 == null || seq2 == null) return { score: 0, subsequence: [] };
+  if (seq1 == null || seq2 == null) return {
+    score: 0,
+    subsequence: []
+  };
   if (seq1 === seq2) {
-    return { score: seq1.length, subsequence: [...seq1] };
+    return {
+      score: seq1.length,
+      subsequence: [...seq1]
+    };
   }
   const cmp = (typeof compare === 'function') ? compare : defaultCompare;
 
@@ -352,7 +358,10 @@ const lcsSubsequence = (seq1, seq2, compare = defaultCompare) => {
   }
   subsequence.reverse();
 
-  return { score, subsequence };
+  return {
+    score,
+    subsequence
+  };
 };
 
 /**
@@ -435,9 +444,17 @@ const bestLcsMatch = (seq1, seqList, lcs = glcs, matcher = scoreMatch, threshold
       value = seq2;
     }
   }
-  if (score < 0) return { value, match, score: 0 };
+  if (score < 0) return {
+    value,
+    match,
+    score: 0
+  };
   match = matcher(seq1, value, score, paretoThreshold(seq1, value));
-  return { value, match, score };
+  return {
+    value,
+    match,
+    score
+  };
 };
 
 const firstLcsMatch = (seq1, seqList, lcs = glcs, matcher = scoreMatch) => {
@@ -453,12 +470,24 @@ const firstLcsMatch = (seq1, seqList, lcs = glcs, matcher = scoreMatch) => {
     }
     if (score >= threshold) {
       match = matcher(seq1, value, score, threshold);
-      return { value, match, score };
+      return {
+        value,
+        match,
+        score
+      };
     }
   }
-  if (score < 0) return { value, match, score: 0 };
-  match = matcher(seq1, value, score, paretoThreshold(seq1,value));
-  return { value, match, score };
+  if (score < 0) return {
+    value,
+    match,
+    score: 0
+  };
+  match = matcher(seq1, value, score, paretoThreshold(seq1, value));
+  return {
+    value,
+    match,
+    score
+  };
 };
 
 const paretoMin = (seq1, seq2) => Math.floor(0.8 * (Math.min(len(seq1), len(seq2)) || 0));
