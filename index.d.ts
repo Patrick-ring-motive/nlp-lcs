@@ -5,7 +5,9 @@
 // ── Shared types ────────────────────────────────────────────────────────────
 
 /** Any value with a numeric `.length` property (string, array, typed array, …). */
-type Sequence = Iterable<any> & { length: number };
+type Sequence = Iterable < any > & {
+  length: number
+};
 
 /** Element comparator — returns `true` when two elements should be considered equal. */
 type Comparator = (a: any, b: any) => boolean;
@@ -20,7 +22,7 @@ type MatcherFunction = (seq1: Sequence, seq2: Sequence, score: number) => boolea
 type MinScore = number | ((seq1: Sequence, seq2: Sequence) => number);
 
 /** Result returned by `bestMatch` / `bestHas` / `bestWeighted` / `bestContext` style functions. */
-interface BestMatchResult<T = any> {
+interface BestMatchResult < T = any > {
   /** The best-scoring candidate from the list. */
   value: T;
   /** Whether the best candidate meets the threshold. */
@@ -30,7 +32,7 @@ interface BestMatchResult<T = any> {
 }
 
 /** Result returned by `lcsSubsequence`. */
-interface SubsequenceResult<T = any> {
+interface SubsequenceResult < T = any > {
   /** Length of the longest common subsequence. */
   score: number;
   /** The actual matched elements. */
@@ -40,14 +42,14 @@ interface SubsequenceResult<T = any> {
 /** Options for `dedupeSegments`. */
 interface DedupeOptions {
   /** Keep the longer of two matching segments. Defaults to `true`. */
-  preferLonger?: boolean;
+  preferLonger ? : boolean;
   /** Tokenizer function. Defaults to whitespace split. */
-  tokenizer?: (str: string) => string[];
+  tokenizer ? : (str: string) => string[];
 }
 
 // ── LRU cache ───────────────────────────────────────────────────────────────
 
-interface LruCache<K = string, V = any> {
+interface LruCache < K = string, V = any > {
   /** Retrieve a value, refreshing its recency. Returns `undefined` on miss. */
   get(key: K): V | undefined;
   /** Store a value, evicting the oldest entry if the cache is full. */
@@ -70,7 +72,7 @@ export declare const defaultCompare: Comparator;
  * Create a simple LRU cache backed by insertion-ordered `Map`.
  * @param limit Maximum number of entries. Defaults to `4096`.
  */
-export declare function createLruCache<K = string, V = any>(limit?: number): LruCache<K, V>;
+export declare function createLruCache < K = string, V = any > (limit ? : number): LruCache < K, V > ;
 
 /** Check whether a value is a string primitive or `String` object. */
 export declare function isString(x: any): x is string;
@@ -103,63 +105,67 @@ export declare const seq: {
   lcs(
     seq1: Sequence,
     seq2: Sequence,
-    compare?: Comparator,
-    minScore?: MinScore,
+    compare ? : Comparator,
+    minScore ? : MinScore,
   ): number;
 
   /**
    * LCS with backtracking — returns both the score and the actual matched elements.
    */
-  subsequence<T = any>(
-    seq1: Iterable<T> & { length: number },
-    seq2: Iterable<T> & { length: number },
-    compare?: Comparator,
-  ): SubsequenceResult<T>;
+  subsequence < T = any > (
+    seq1: Iterable < T > & {
+      length: number
+    },
+    seq2: Iterable < T > & {
+      length: number
+    },
+    compare ? : Comparator,
+  ): SubsequenceResult < T > ;
 
   /** Test whether `score >= floor(0.8 × max(len1, len2))`. */
-  scoreMatch(seq1: Sequence, seq2: Sequence, score?: number): boolean;
+  scoreMatch(seq1: Sequence, seq2: Sequence, score ? : number): boolean;
 
   /** `true` if LCS score ≥ 80 % of the longer sequence's length. */
-  match(seq1: Sequence, seq2: Sequence, lcs?: LcsFunction): boolean;
+  match(seq1: Sequence, seq2: Sequence, lcs ? : LcsFunction): boolean;
 
   /** Find the highest-scoring candidate from a list. */
-  bestMatch<T extends Sequence>(
+  bestMatch < T extends Sequence > (
     query: Sequence,
     candidates: T[],
-    lcs?: LcsFunction,
-    matcher?: MatcherFunction,
-  ): BestMatchResult<T>;
+    lcs ? : LcsFunction,
+    matcher ? : MatcherFunction,
+  ): BestMatchResult < T > ;
 
   /** Test whether `score >= floor(0.8 × min(len1, len2))`. */
-  scoreHas(seq1: Sequence, seq2: Sequence, score?: number): boolean;
+  scoreHas(seq1: Sequence, seq2: Sequence, score ? : number): boolean;
 
   /** `true` if LCS score ≥ 80 % of the shorter sequence's length (containment). */
-  has(seq1: Sequence, seq2: Sequence, lcs?: LcsFunction): boolean;
+  has(seq1: Sequence, seq2: Sequence, lcs ? : LcsFunction): boolean;
 
   /** Best containment match from a list. */
-  bestHas<T extends Sequence>(
+  bestHas < T extends Sequence > (
     query: Sequence,
     candidates: T[],
-    lcs?: LcsFunction,
-  ): BestMatchResult<T>;
+    lcs ? : LcsFunction,
+  ): BestMatchResult < T > ;
 
   /** LCS score × (minLen / maxLen) — penalizes length disparity. */
-  weighted(seq1: Sequence, seq2: Sequence, lcs?: LcsFunction): number;
+  weighted(seq1: Sequence, seq2: Sequence, lcs ? : LcsFunction): number;
 
   /** Best weighted match from a list. */
-  bestWeighted<T extends Sequence>(query: Sequence, candidates: T[]): BestMatchResult<T>;
+  bestWeighted < T extends Sequence > (query: Sequence, candidates: T[]): BestMatchResult < T > ;
 
   /** LCS score + (maxLen / minLen) — rewards longer containing sequences. */
-  context(seq1: Sequence, seq2: Sequence, lcs?: LcsFunction): number;
+  context(seq1: Sequence, seq2: Sequence, lcs ? : LcsFunction): number;
 
   /** Best context match from a list. */
-  bestContext<T extends Sequence>(query: Sequence, candidates: T[]): BestMatchResult<T>;
+  bestContext < T extends Sequence > (query: Sequence, candidates: T[]): BestMatchResult < T > ;
 
   /** LCS on sorted copies — order-insensitive comparison. */
-  sorted(seq1: Sequence, seq2: Sequence, lcs?: LcsFunction): number;
+  sorted(seq1: Sequence, seq2: Sequence, lcs ? : LcsFunction): number;
 
   /** Sørensen–Dice similarity: 2×LCS / (len1+len2). Returns a value in [0, 1]. */
-  dice(seq1: Sequence, seq2: Sequence, lcs?: LcsFunction): number;
+  dice(seq1: Sequence, seq2: Sequence, lcs ? : LcsFunction): number;
 };
 
 // ── word namespace — character-level (single-word) comparisons ──────────────
@@ -175,19 +181,19 @@ export declare const word: {
   match(a: string, b: string): boolean;
 
   /** Best fuzzy word from a list. */
-  bestMatch(query: string, candidates: string[]): BestMatchResult<string>;
+  bestMatch(query: string, candidates: string[]): BestMatchResult < string > ;
 
   /** Weighted character-level score. */
   weighted(a: string, b: string): number;
 
   /** Best weighted word from a list. */
-  bestWeighted(query: string, candidates: string[]): BestMatchResult<string>;
+  bestWeighted(query: string, candidates: string[]): BestMatchResult < string > ;
 
   /** Context-rewarding character-level score. */
   context(a: string, b: string): number;
 
   /** Best context word from a list. */
-  bestContext(query: string, candidates: string[]): BestMatchResult<string>;
+  bestContext(query: string, candidates: string[]): BestMatchResult < string > ;
 
   /** Sorted word-level LCS (tokenizes, sorts, then sentence LCS). */
   sorted(a: string, b: string): number;
@@ -206,7 +212,7 @@ export declare const sentence: {
   match(words1: string[], words2: string[]): boolean;
 
   /** Best matching sentence from a list. */
-  bestMatch(query: string[], candidates: string[][]): BestMatchResult<string[]>;
+  bestMatch(query: string[], candidates: string[][]): BestMatchResult < string[] > ;
 
   /** Split a string on whitespace. */
   tokenize(str: string): string[];
@@ -218,13 +224,13 @@ export declare const sentence: {
   toPhrases(str: string): string[];
 
   /** Remove fuzzy-duplicate text segments. */
-  dedupeSegments(segments: string[], options?: DedupeOptions): string[];
+  dedupeSegments(segments: string[], options ? : DedupeOptions): string[];
 
   /** Split text into sentences and dedupe. */
-  dedupeSentences(text: string, options?: DedupeOptions): string[];
+  dedupeSentences(text: string, options ? : DedupeOptions): string[];
 
   /** Split text into phrases and dedupe. */
-  dedupePhrases(text: string, options?: DedupeOptions): string[];
+  dedupePhrases(text: string, options ? : DedupeOptions): string[];
 
   /** Sørensen–Dice similarity at the sentence level. Returns a value in [0, 1]. */
   dice(words1: string[], words2: string[]): number;
