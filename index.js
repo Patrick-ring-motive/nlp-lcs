@@ -284,6 +284,9 @@ const glcs = function generalLongestCommonSubsequence(seq1, seq2, comp, minS) {
 
 const paretoThreshold = (seq1, seq2) => Math.floor(0.8 * (Math.max(len(seq1), len(seq2)) || 0));
 
+// Exact LCS with no early-out. Used for ranking/scoring; plcs stays for boolean gates.
+const exactLcs = (seq1, seq2) => glcs(seq1, seq2);
+
 const plcs = (seq1, seq2) => {
   const threshold = paretoThreshold(seq1, seq2);
   return glcs(seq1, seq2, null, threshold);
@@ -382,6 +385,8 @@ const norm = x => stringify(x).trim().normalize('NFD').toLowerCase().trim();
  * @param {string} str2
  * @returns {number}
  */
+const nlcsExact = (str1, str2) => exactLcs(norm(str1), norm(str2));
+
 const nlcs = function normalizedLongestCommonSubsequence(str1, str2) {
   return plcs(norm(str1), norm(str2));
 };
@@ -432,13 +437,12 @@ const lcsMatch = (seq1, seq2, lcs = glcs) => {
  * @returns {{value: *, match: boolean, score: number}} Best candidate, whether it
  *   meets the threshold, and the raw score.
  */
-const bestLcsMatch = (seq1, seqList, lcs = glcs, matcher = scoreMatch, threshold) => {
+const bestLcsMatch = (seq1, seqList, lcs = glcs, matcher = scoreMatch, threshold, rawLcs) => {
   let score = -1;
   let value;
   let match = false;
   for (const seq2 of seqList) {
-    const threshold = paretoThreshold(seq1, seq2);
-    const matchScore = lcs(seq1, seq2, null, threshold);
+    const matchScore = lcs(seq1, seq2);
     if (matchScore > score) {
       score = matchScore;
       value = seq2;
@@ -449,7 +453,7 @@ const bestLcsMatch = (seq1, seqList, lcs = glcs, matcher = scoreMatch, threshold
     match,
     score: 0
   };
-  match = matcher(seq1, value, score, paretoThreshold(seq1, value));
+  match = matcher(seq1, value, rawLcs ? rawLcs(seq1, value) : score, paretoThreshold(seq1, value));
   return {
     value,
     match,
@@ -560,7 +564,7 @@ const wordMatch = (seq1, seq2) => {
  * @returns {{value: string, match: boolean, score: number}}
  */
 const bestWordMatch = (seq1, seqList) => {
-  return bestLcsMatch(seq1, seqList, nlcs, wordMatch);
+  return bestLcsMatch(seq1, seqList, nlcsExact, wordMatch);
 };
 const firstWordMatch = (seq1, seqList) => {
   return firstLcsMatch(seq1, seqList, nlcs, wordMatch);
@@ -586,6 +590,8 @@ const firstWordMatch = (seq1, seqList) => {
  * @param {string[]} words2 - Tokenized sentence
  * @returns {number}
  */
+const sentenceLcsExact = (words1, words2) => glcs(words1, words2, wordMatch);
+
 const sentenceLcs = (words1, words2) => {
   const threshold = paretoThreshold(words1, words2);
   return glcs(words1, words2, wordMatch, threshold);
@@ -613,7 +619,7 @@ const sentenceMatch = (seq1, seq2) => {
  * @returns {{value: string[], match: boolean, score: number}}
  */
 const bestSentenceMatch = (seq1, seqList) => {
-  return bestLcsMatch(seq1, seqList, sentenceLcs, sentenceMatch);
+  return bestLcsMatch(seq1, seqList, sentenceLcsExact, sentenceMatch);
 };
 
 /**
@@ -631,7 +637,7 @@ const bestSentenceMatch = (seq1, seqList) => {
  * @param {function} lcs - LCS function to use. Defaults to plcs.
  * @returns {number}
  */
-const weightedLcs = (seq1, seq2, lcs = plcs) => {
+const weightedLcs = (seq1, seq2, lcs = exactLcs) => {
   return lcs(seq1, seq2) * (Math.min(len(seq1), len(seq2)) || 0) / (Math.max(len(seq1), len(seq2), 1) || 1);
 };
 
@@ -643,7 +649,7 @@ const weightedLcs = (seq1, seq2, lcs = plcs) => {
  * @returns {{value: *, match: boolean, score: number}}
  */
 const bestWeightedMatch = (seq1, seqList) => {
-  return bestLcsMatch(seq1, seqList, weightedLcs);
+  return bestLcsMatch(seq1, seqList, weightedLcs, scoreMatch, undefined, exactLcs);
 };
 
 const firstWeightedMatch = (seq1, seqList) => {
@@ -659,7 +665,7 @@ const firstWeightedMatch = (seq1, seqList) => {
  * @returns {number}
  */
 const weightedWordLcs = (seq1, seq2) => {
-  return weightedLcs(seq1, seq2, nlcs);
+  return weightedLcs(seq1, seq2, nlcsExact);
 };
 
 /**
@@ -671,7 +677,7 @@ const weightedWordLcs = (seq1, seq2) => {
  * @returns {{value: string, match: boolean, score: number}}
  */
 const bestWeightedWordMatch = (seq1, seqList) => {
-  return bestLcsMatch(seq1, seqList, weightedWordLcs);
+  return bestLcsMatch(seq1, seqList, weightedWordLcs, scoreMatch, undefined, nlcsExact);
 };
 
 const firstWeightedWordMatch = (seq1, seqList) => {
@@ -698,7 +704,7 @@ const firstWeightedWordMatch = (seq1, seqList) => {
  * @param {function} lcs - LCS function to use. Defaults to plcs.
  * @returns {number}
  */
-const contextLcs = (seq1, seq2, lcs = plcs) => {
+const contextLcs = (seq1, seq2, lcs = exactLcs) => {
   return lcs(seq1, seq2) + (Math.max(len(seq1), len(seq2)) || 0) / (Math.min(len(seq1), len(seq2)) || 1);
 };
 
@@ -723,7 +729,7 @@ const bestContextMatch = (seq1, seqList) => {
  * @returns {number}
  */
 const contextWordLcs = (seq1, seq2) => {
-  return contextLcs(seq1, seq2, nlcs);
+  return contextLcs(seq1, seq2, nlcsExact);
 };
 
 /**
@@ -758,7 +764,7 @@ const firstContextWordMatch = (seq1, seqList) => {
  * @param {function} lcs - LCS function to use. Defaults to plcs.
  * @returns {number} Similarity in [0, 1].
  */
-const diceLcs = (seq1, seq2, lcs = plcs) => {
+const diceLcs = (seq1, seq2, lcs = exactLcs) => {
   const total = len(seq1) + len(seq2);
   if (total === 0) return 0;
   return (2 * lcs(seq1, seq2)) / total;
@@ -772,7 +778,7 @@ const diceLcs = (seq1, seq2, lcs = plcs) => {
  * @returns {number} Similarity in [0, 1].
  */
 const diceWordLcs = (seq1, seq2) => {
-  return diceLcs(seq1, seq2, nlcs);
+  return diceLcs(seq1, seq2, nlcsExact);
 };
 
 /**
@@ -783,7 +789,7 @@ const diceWordLcs = (seq1, seq2) => {
  * @returns {number} Similarity in [0, 1].
  */
 const diceSentenceLcs = (words1, words2) => {
-  return diceLcs(words1, words2, sentenceLcs);
+  return diceLcs(words1, words2, sentenceLcsExact);
 };
 
 /**
